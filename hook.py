@@ -43,6 +43,16 @@ def main():
             "pane": pane,
             "updated": time.time(),
         }
+        if pane:  # drop older session files that belong to the same pane
+            for f in os.listdir(STATE_DIR):
+                fp = os.path.join(STATE_DIR, f)
+                if f.endswith(".json") and fp != path:
+                    try:
+                        with open(fp) as fh:
+                            if json.load(fh).get("pane") == pane:
+                                os.remove(fp)
+                    except Exception:
+                        pass
         tmp = path + ".tmp"
         with open(tmp, "w") as f:
             json.dump(state, f)

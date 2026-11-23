@@ -31,7 +31,9 @@ Make sure `~/.local/bin` is on your PATH.
 ## Use
 Run `ccs`. It opens tmux with the sidebar on the left. Start `claude` in the right pane. Each new tmux window (`prefix c`) gets its own sidebar.
 
-Keys in the sidebar: `j`/`k` or arrows to move, `Enter` or `1-9` to jump, `q` to quit.
+`ccs kill` stops everything (ends the Claude sessions inside it). `ccs restart` stops and starts fresh; run it from a normal terminal, not inside tmux.
+
+Keys in the sidebar: `j`/`k` or arrows to move, `Enter` or `1-9` to jump, `n` for a new Claude session in a new window, `q` to quit.
 
 Only sessions started inside tmux show up.
 

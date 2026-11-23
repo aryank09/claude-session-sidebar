@@ -1,14 +1,26 @@
 #!/usr/bin/env bash
 # Start (or attach to) a tmux session with a Claude sessions sidebar on the left.
 set -e
+case "${1:-}" in
+  kill|stop)    tmux kill-session -t claude 2>/dev/null && echo "Stopped." || echo "Nothing running."; exit 0 ;;
+  restart)      tmux kill-session -t claude 2>/dev/null || true ;;
+  ""|start)     ;;
+  *)            echo "usage: ccs [start|kill|restart]"; exit 1 ;;
+esac
 DIR="$HOME/.claude/session-sidebar"
+W="${CCS_WIDTH:-28}"
 SB="python3 $DIR/sidebar.py"
+PIN="for p in \$(tmux list-panes -a -F '#{pane_id}#{?#{==:#{pane_title},claude-sidebar},Y,N}' | grep 'Y\$' | tr -d Y); do tmux resize-pane -t \$p -x $W; done"
 if ! tmux has-session -t claude 2>/dev/null; then
-  tmux new-session -d -s claude -c "$PWD"
-  tmux set-option -t claude -g remain-on-exit off
-  tmux split-window -t claude -hb -l 32 -c "$PWD" "$SB"
+  tmux new-session -d -s claude -x "$(tput cols)" -y "$(tput lines)" -c "$PWD"
+  tmux split-window -t claude -hb -l "$W" -c "$PWD" "printf '\\033]2;claude-sidebar\\033\\\\'; $SB"
   tmux select-pane -t claude -R
-  # every new window also gets a sidebar on the left
-  tmux set-hook -t claude after-new-window "split-window -hb -l 32 '$SB' ; select-pane -R"
+  tmux set-option -g mouse on
+  tmux bind-key h select-pane -L
+  tmux bind-key l select-pane -R
+  # every new window also gets a sidebar; keep sidebars at a fixed width
+  tmux set-hook -t claude after-new-window "split-window -hb -l $W \"printf '\\\\033]2;claude-sidebar\\\\033\\\\\\\\'; $SB\" ; select-pane -R"
+  tmux set-hook -t claude client-attached "run-shell \"$PIN\""
+  tmux set-hook -t claude client-resized "run-shell \"$PIN\""
 fi
 if [ -n "$TMUX" ]; then tmux switch-client -t claude; else tmux attach -t claude; fi

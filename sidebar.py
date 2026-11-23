@@ -15,9 +15,9 @@ def tmux(*args):
 
 def load():
     panes = {}
-    for line in tmux("list-panes", "-a", "-F", "#{pane_id}\t#{window_id}").splitlines():
-        p, w = line.split("\t")
-        panes[p] = w
+    for line in tmux("list-panes", "-a", "-F", "#{pane_id}\t#{window_id}\t#{pane_current_path}").splitlines():
+        p, w, path = line.split("\t")
+        panes[p] = (w, path)
     rows = []
     now = time.time()
     for f in glob.glob(os.path.join(STATE_DIR, "*.json")):
@@ -27,8 +27,16 @@ def load():
             continue
         if s.get("pane") not in panes or now - s.get("updated", 0) > MAX_AGE:
             continue
-        s["window"] = panes[s["pane"]]
+        s["window"], path = panes[s["pane"]]
+        if path:  # live folder of the pane, so it follows cd
+            s["cwd"] = path
         rows.append(s)
+    # one row per pane: a resumed/cleared session leaves an older file behind
+    newest = {}
+    for s in rows:
+        if s["pane"] not in newest or s["updated"] > newest[s["pane"]]["updated"]:
+            newest[s["pane"]] = s
+    rows = list(newest.values())
     rows.sort(key=lambda s: (s["window"], s["pane"]))
     return rows
 
@@ -52,7 +60,7 @@ def render(rows, sel, tick, cur_window, w, h):
         out.append(f"{mark} {i+1} {icon}{mark} {clip(name, w-6)}{RST}\n")
         if s.get("prompt"):
             out.append(f"{DIM}     {clip(s['prompt'], w-6)}{RST}\n")
-    out.append(f"\033[{h};1H{DIM} j/k move  ⏎ jump  q quit{RST}"[: 200])
+    out.append(f"\033[{h};1H{DIM} j/k move  ⏎ jump  n new{RST}"[: 200])
     sys.stdout.write("".join(out))
     sys.stdout.flush()
 
@@ -82,6 +90,9 @@ def main():
                     sel = min(sel + 1, len(rows) - 1)
                 elif k in ("k", "\x1b[A"):
                     sel = max(sel - 1, 0)
+                elif k == "n":
+                    here = rows[sel]["cwd"] if rows else os.path.expanduser("~")
+                    tmux("new-window", "-c", here, "claude")
                 elif k in ("\r", "\n") and rows:
                     jump(rows[sel])
                 elif k.isdigit() and 1 <= int(k) <= len(rows):
