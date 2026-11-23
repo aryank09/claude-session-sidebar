@@ -26,6 +26,13 @@ def main():
             return
         if event not in STATUS:
             return
+        status = STATUS[event]
+        if event == "Notification":
+            msg = str(data.get("message", "")).lower()
+            kind = str(data.get("notification_type", ""))
+            # "waiting for your input" just means Claude is idle, not blocked
+            if kind == "idle_prompt" or "waiting for your input" in msg:
+                status = "idle"
         old = {}
         try:
             with open(path) as f:
@@ -37,7 +44,7 @@ def main():
             prompt = " ".join(str(data.get("prompt", "")).split())[:80]
         pane = os.environ.get("TMUX_PANE") or old.get("pane", "")
         state = {
-            "status": STATUS[event],
+            "status": status,
             "cwd": data.get("cwd") or old.get("cwd", ""),
             "prompt": prompt,
             "pane": pane,
