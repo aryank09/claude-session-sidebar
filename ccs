@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Start (or attach to) a tmux session with a Claude sessions sidebar on the left.
+set -e
+DIR="$HOME/.claude/session-sidebar"
+SB="python3 $DIR/sidebar.py"
+if ! tmux has-session -t claude 2>/dev/null; then
+  tmux new-session -d -s claude -c "$PWD"
+  tmux set-option -t claude -g remain-on-exit off
+  tmux split-window -t claude -hb -l 32 -c "$PWD" "$SB"
+  tmux select-pane -t claude -R
+  # every new window also gets a sidebar on the left
+  tmux set-hook -t claude after-new-window "split-window -hb -l 32 '$SB' ; select-pane -R"
+fi
+if [ -n "$TMUX" ]; then tmux switch-client -t claude; else tmux attach -t claude; fi
