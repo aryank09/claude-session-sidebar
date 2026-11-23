@@ -6,7 +6,8 @@ SETTINGS="$HOME/.claude/settings.json"
 command -v tmux >/dev/null || { echo "tmux is required"; exit 1; }
 command -v python3 >/dev/null || { echo "python3 is required"; exit 1; }
 mkdir -p "$DEST/state" "$HOME/.local/bin" "$HOME/.claude"
-cp "$SRC/hook.py" "$SRC/sidebar.py" "$DEST/"
+cp "$SRC/hook.py" "$SRC/sidebar.py" "$SRC/pin.sh" "$DEST/"
+chmod +x "$DEST/pin.sh"
 cp "$SRC/ccs" "$HOME/.local/bin/ccs"
 chmod +x "$HOME/.local/bin/ccs"
 [ -f "$SETTINGS" ] && cp "$SETTINGS" "$SETTINGS.bak"

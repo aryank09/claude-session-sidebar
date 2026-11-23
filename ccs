@@ -10,7 +10,7 @@ esac
 DIR="$HOME/.claude/session-sidebar"
 W="${CCS_WIDTH:-28}"
 SB="python3 $DIR/sidebar.py"
-PIN="for p in \$(tmux list-panes -a -F '#{pane_id}#{?#{==:#{pane_title},claude-sidebar},Y,N}' | grep 'Y\$' | tr -d Y); do tmux resize-pane -t \$p -x $W; done"
+PIN="$DIR/pin.sh"
 if ! tmux has-session -t claude 2>/dev/null; then
   tmux new-session -d -s claude -x "$(tput cols)" -y "$(tput lines)" -c "$PWD"
   tmux split-window -t claude -hb -l "$W" -c "$PWD" "printf '\\033]2;claude-sidebar\\033\\\\'; $SB"
@@ -20,7 +20,7 @@ if ! tmux has-session -t claude 2>/dev/null; then
   tmux bind-key l select-pane -R
   # every new window also gets a sidebar; keep sidebars at a fixed width
   tmux set-hook -t claude after-new-window "split-window -hb -l $W \"printf '\\\\033]2;claude-sidebar\\\\033\\\\\\\\'; $SB\" ; select-pane -R"
-  tmux set-hook -t claude client-attached "run-shell \"$PIN\""
-  tmux set-hook -t claude client-resized "run-shell \"$PIN\""
+  tmux set-hook -t claude client-attached "run-shell \"CCS_WIDTH=$W $PIN\""
+  tmux set-hook -t claude client-resized "run-shell \"CCS_WIDTH=$W $PIN\""
 fi
 if [ -n "$TMUX" ]; then tmux switch-client -t claude; else tmux attach -t claude; fi

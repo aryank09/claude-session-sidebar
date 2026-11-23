@@ -9,6 +9,7 @@ Claude Code hooks run `hook.py` on events and write one JSON file per session to
 - `hook.py` — hook script. Maps events to status (SessionStart/Stop → idle, UserPromptSubmit/PreToolUse → working, Notification → waiting unless it is an idle notice, SessionEnd → delete). Removes older state files for the same pane. Never prints or fails.
 - `sidebar.py` — the UI. One row per pane, live folder from tmux `pane_current_path`, spinner `· ✢ ✳ ✶ ✻ ✽`. Keys: j/k/arrows, Enter or 1-9 jump, `n` new session in highlighted folder, `q` quit.
 - `ccs` — launcher. `ccs` / `ccs start`, `ccs kill`, `ccs restart`. Sidebar width 28 (`CCS_WIDTH`), re-pinned on attach/resize, mouse on, `prefix h`/`prefix l` switch panes, hook adds a sidebar to every new window.
+- `pin.sh` — resizes sidebar panes (title `claude-sidebar`) back to fixed width; run by tmux hooks. Must be a script file: tmux expands `$var` inside hook strings.
 - `install.sh` / `uninstall.sh` — copy files to `~/.claude/session-sidebar/` and `~/.local/bin/ccs`, merge/remove the 6 hooks in `~/.claude/settings.json` (backup at `settings.json.bak`).
 - `README.md`, `LICENSE`, `.gitignore` — docs, MIT, ignores.
 
